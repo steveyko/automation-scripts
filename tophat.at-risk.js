@@ -1,3 +1,4 @@
+const THRESHOLD = 3 // Report if # of misses is greater than 3
 const WAIT_TIMEOUT = 60000
 const GOTO_TIMEOUT = 60000
 const EXECUTION_TIMEOUT = 60000
@@ -11,8 +12,6 @@ const sections = {
   '316904': 'E',
   '517380': 'F',
 }
-
-const THRESHOLD = 3 // greater than
   
 function runNightmare(id, section, threshold) {
   const Nightmare = require('nightmare')
@@ -33,8 +32,6 @@ function runNightmare(id, section, threshold) {
   input = input.split('\n')
   let username = input[0].trim()
   let password = input[1].trim()
-  console.log(username)
-  console.log(password)
 
   nightmare
     .goto('https://myub.buffalo.edu')
@@ -50,9 +47,9 @@ function runNightmare(id, section, threshold) {
     .wait('.select-input__dropdown-option')
     .wait(2000)
     .click('.select-input__dropdown-option')
-    .wait('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1wd2bfi-2.ctpVYB > button')
+    .wait('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
     .wait(2000)
-    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1wd2bfi-2.ctpVYB > button')
+    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
     .wait(3000)
     .goto('https://app.tophat.com/e/' + id)
     //.wait('#flux-app > div > div > div.course_header > div.course_header_footer > nav > ul > li:nth-child(2) > a')

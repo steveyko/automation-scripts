@@ -1,5 +1,6 @@
 const EXPECTED_ACTIVITIES = 4
 const MAX_POINTS = 3
+const ACTIVITY_THRESHOLD = 2 // Report if less than full points for more than 2 activities
 const WAIT_TIMEOUT = 60000
 const GOTO_TIMEOUT = 60000
 const EXECUTION_TIMEOUT = 60000
@@ -74,7 +75,7 @@ function processRow(row) {
   if (keyCnt < EXPECTED_ACTIVITIES) {
     cnt = cnt + EXPECTED_ACTIVITIES - keyCnt
   }
-  if (cnt > 2) {
+  if (cnt > ACTIVITY_THRESHOLD) {
     //console.log(section + ', ' + firstname + ' ' + lastname + ', ' + username)
     //exports.result.push([section, firstname + ' ' + lastname, username])
     console.log(firstname + ' ' + lastname + ', ' + username)
