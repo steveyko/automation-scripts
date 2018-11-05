@@ -15,11 +15,14 @@ const sections = {
 }
 
 function processFiles(xls0, xls1, section) {
-  const xlsReader = require('xlsx');
+  const xlsReader = require('xlsx')
   let workbookGrade = xlsReader.readFile(xls0)
   let workbookAbsence = xlsReader.readFile(xls1)
   let gradeSheet = workbookGrade.Sheets[workbookGrade.SheetNames[0]]
   let absenceSheet = workbookAbsence.Sheets[workbookAbsence.SheetNames[0]]
+  /*
+   * gradebook: section, email, firstName, lastName, absences, grade, total
+   */
   let gradebook = {}
 
   /*
@@ -31,7 +34,7 @@ function processFiles(xls0, xls1, section) {
    * column G: grade
    * column H: total
    */
-  let row = 3
+  let row = 3 // The first two rows are the header
   let total = gradeSheet['H3'].v
   while (true) {
     let email = (gradeSheet['C' + row] ? gradeSheet['C' + row].v : undefined)
@@ -55,7 +58,7 @@ function processFiles(xls0, xls1, section) {
    * column E: email
    * column K: absences
    */
-  row = 2
+  row = 2 // The first row is the header
   while (true) {
     let email = (absenceSheet['E' + row] ? absenceSheet['E' + row].v : undefined)
     let absences = (absenceSheet['K' + row] ? absenceSheet['K' + row].v : undefined)
@@ -78,7 +81,18 @@ function processFiles(xls0, xls1, section) {
   }
 }
 
-function setupNightmare(path) {
+function getUsernamePassword() {
+  const fs = require('fs')
+  let input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
+  input = input.split('\n')
+  let username = input[0].trim()
+  let password = input[1].trim()
+
+  return [username, password]
+}
+  
+async function getGrades(id, section) {
+  const returnFilePath = process.cwd() + '/' + section + '.grades.xls'
   const Nightmare = require('nightmare')
   require('nightmare-download-manager')(Nightmare)
   let nightmare = Nightmare({
@@ -91,33 +105,16 @@ function setupNightmare(path) {
     executionTimeout: EXECUTION_TIMEOUT,
   })
 
-  nightmare.on('console', (type, msg) => {
+  await nightmare.on('console', (type, msg) => {
     if (type == 'log') console.log(msg)
     else console.error(msg)
   })
 
-  nightmare.on('download', (state, downloadItem) => {
+  await nightmare.on('download', (state, downloadItem) => {
     if (state == 'started') {
-      nightmare.emit('download', path, downloadItem)
+      nightmare.emit('download', returnFilePath, downloadItem)
     }
   })
-
-  return nightmare
-}
-
-function getUsernamePassword() {
-  const fs = require('fs')
-  let input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
-  input = input.split('\n')
-  let username = input[0].trim()
-  let password = input[1].trim()
-
-  return [username, password]
-}
-  
-async function getGrades(id, section)
-  const returnFilePath = process.cwd() + '/' + section + '.0.xls'
-  let nightmare = setupNightmare(returnFilePath)
 
   let usernamePassword = getUsernamePassword()
   let username = usernamePassword[0]
@@ -134,7 +131,7 @@ async function getGrades(id, section)
     .goto('https://app.tophat.com/login')
     .wait('input#login-school-select')
     .wait(2000)
-    .insert('input#login-school-select', 'University at Buffalo SUNY')
+    .type('input#login-school-select', 'University at Buffalo SUNY')
     .wait('.select-input__dropdown-option')
     .wait(2000)
     .click('.select-input__dropdown-option')
@@ -174,9 +171,30 @@ async function getGrades(id, section)
   return returnFilePath
 }
 
-async function getAbsences(id, section)
-  const returnFilePath = process.cwd() + '/' + section + '.1.xls' 
-  let nightmare = setupNightmare(returnFilePath)
+async function getAbsences(id, section) {
+  const returnFilePath = process.cwd() + '/' + section + '.absences.xls' 
+  const Nightmare = require('nightmare')
+  require('nightmare-download-manager')(Nightmare)
+  let nightmare = Nightmare({
+    show: true,
+    paths: {
+      downloads: process.cwd(),
+    },
+    waitTimeout: WAIT_TIMEOUT,
+    gotoTimeout: GOTO_TIMEOUT,
+    executionTimeout: EXECUTION_TIMEOUT,
+  })
+
+  await nightmare.on('console', (type, msg) => {
+    if (type == 'log') console.log(msg)
+    else console.error(msg)
+  })
+
+  await nightmare.on('download', (state, downloadItem) => {
+    if (state == 'started') {
+      nightmare.emit('download', returnFilePath, downloadItem)
+    }
+  })
 
   let usernamePassword = getUsernamePassword()
   let username = usernamePassword[0]
@@ -193,7 +211,7 @@ async function getAbsences(id, section)
     .goto('https://app.tophat.com/login')
     .wait('input#login-school-select')
     .wait(2000)
-    .insert('input#login-school-select', 'University at Buffalo SUNY')
+    .type('input#login-school-select', 'University at Buffalo SUNY')
     .wait('.select-input__dropdown-option')
     .wait(2000)
     .click('.select-input__dropdown-option')
@@ -230,9 +248,8 @@ async function getAbsences(id, section)
 async function main() {
   for (let key in sections) {
     let gradeFilePath = await getGrades(key, sections[key])
-    let absenceFilePath = await getAbsences(key, section[key])
-
-    await processFiles(gradeFilePath, absenceFilePath, section)
+    let absenceFilePath = await getAbsences(key, sections[key])
+    await processFiles(gradeFilePath, absenceFilePath, sections[key])
   }
 }
 
