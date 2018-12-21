@@ -14,16 +14,16 @@ const sections = {
   '517380': 'F',
 }
 
-function processFiles(xls0, xls1, section) {
+async function processFiles(xls0, xls1, section) {
   const xlsReader = require('xlsx')
-  let workbookGrade = xlsReader.readFile(xls0)
-  let workbookAbsence = xlsReader.readFile(xls1)
-  let gradeSheet = workbookGrade.Sheets[workbookGrade.SheetNames[0]]
-  let absenceSheet = workbookAbsence.Sheets[workbookAbsence.SheetNames[0]]
+  var workbookGrade = xlsReader.readFile(xls0)
+  var workbookAbsence = xlsReader.readFile(xls1)
+  var gradeSheet = workbookGrade.Sheets[workbookGrade.SheetNames[0]]
+  var absenceSheet = workbookAbsence.Sheets[workbookAbsence.SheetNames[0]]
   /*
    * gradebook: section, email, firstName, lastName, absences, grade, total
    */
-  let gradebook = {}
+  var gradebook = {}
 
   /*
    * For grades,
@@ -34,22 +34,21 @@ function processFiles(xls0, xls1, section) {
    * column G: grade
    * column H: total
    */
-  let row = 3 // The first two rows are the header
-  let total = gradeSheet['H3'].v
+  var row = 2 // The first two rows are the header
+  var total = gradeSheet['H3'].v
   while (true) {
-    let email = (gradeSheet['C' + row] ? gradeSheet['C' + row].v : undefined)
-    let firstName = (gradeSheet['D' + row] ? gradeSheet['D' + row].v : undefined)
-    let lastName = (gradeSheet['E' + row] ? gradeSheet['E' + row].v : undefined)
-    let grade = (gradeSheet['G' + row] ? gradeSheet['G' + row].v : undefined)
+    row++
+    var email = (gradeSheet['C' + row] ? gradeSheet['C' + row].v : undefined)
+    var firstName = (gradeSheet['D' + row] ? gradeSheet['D' + row].v : undefined)
+    var lastName = (gradeSheet['E' + row] ? gradeSheet['E' + row].v : undefined)
+    var grade = (gradeSheet['G' + row] ? gradeSheet['G' + row].v : undefined)
 
     if (email == undefined) break
     if (grade == undefined) {
-      console.log('No grade for ' + email)
-      break
+      await console.error('No grade for ' + email)
     }
 
     gradebook[email] = [section, email, firstName, lastName, grade, total]
-    row++
   }
 
   /*
@@ -58,35 +57,38 @@ function processFiles(xls0, xls1, section) {
    * column E: email
    * column K: absences
    */
-  row = 2 // The first row is the header
+  row = 1 // The first row is the header
   while (true) {
-    let email = (absenceSheet['E' + row] ? absenceSheet['E' + row].v : undefined)
-    let absences = (absenceSheet['K' + row] ? absenceSheet['K' + row].v : undefined)
+    row++
+    var email = (absenceSheet['E' + row] ? absenceSheet['E' + row].v : undefined)
+    var absences = (absenceSheet['K' + row] ? absenceSheet['K' + row].v : undefined)
 
     if (email == undefined) break
     /*
      * section, email, firstName, lastName, absences, grade, total
      */
+    if (gradebook[email] == undefined) {
+      console.error('No entry in gradebook for ' + email)
+    }
     gradebook[email].splice(4, 0, absences)
-    row++
   }
 
   const fs = require('fs')
   fs.unlink(xls0, (err) => { if (err) throw err })
   fs.unlink(xls1, (err) => { if (err) throw err })
 
-  for (let email in gradebook) {
-    let data = gradebook[email]
-    console.log(data[0] + ',' + data[1] + ',' + data[2] + ',' + data[3] + ',' + data[4] + ',' + data[5] + ',' + data[6])
+  for (var email in gradebook) {
+    var data = gradebook[email]
+    await console.log(data[0] + ',' + data[1] + ',' + data[2] + ',' + data[3] + ',' + data[4] + ',' + data[5] + ',' + data[6])
   }
 }
 
 function getUsernamePassword() {
   const fs = require('fs')
-  let input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
+  var input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
   input = input.split('\n')
-  let username = input[0].trim()
-  let password = input[1].trim()
+  var username = input[0].trim()
+  var password = input[1].trim()
 
   return [username, password]
 }
@@ -95,7 +97,7 @@ async function getGrades(id, section) {
   const returnFilePath = process.cwd() + '/' + section + '.grades.xls'
   const Nightmare = require('nightmare')
   require('nightmare-download-manager')(Nightmare)
-  let nightmare = Nightmare({
+  var nightmare = Nightmare({
     show: true,
     paths: {
       downloads: process.cwd(),
@@ -103,6 +105,9 @@ async function getGrades(id, section) {
     waitTimeout: WAIT_TIMEOUT,
     gotoTimeout: GOTO_TIMEOUT,
     executionTimeout: EXECUTION_TIMEOUT,
+    webPreferences: {
+      partition: 'nopersist'
+    },
   })
 
   await nightmare.on('console', (type, msg) => {
@@ -116,9 +121,9 @@ async function getGrades(id, section) {
     }
   })
 
-  let usernamePassword = getUsernamePassword()
-  let username = usernamePassword[0]
-  let password = usernamePassword[1]
+  var usernamePassword = getUsernamePassword()
+  var username = usernamePassword[0]
+  var password = usernamePassword[1]
 
   await nightmare
     .downloadManager()
@@ -135,14 +140,15 @@ async function getGrades(id, section) {
     .wait('.select-input__dropdown-option')
     .wait(2000)
     .click('.select-input__dropdown-option')
-    .wait('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
+    .wait('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-sc-1kvp6pu-2.dBUCOx')
     .wait(2000)
-    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
+    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-sc-1kvp6pu-2.dBUCOx > button')
     .wait(3000)
+    //.goto('https://app.tophat.com/e/' + id + '/gradebook')
     .goto('https://app.tophat.com/e/' + id)
-    .wait('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-s13b0dbv-0.fprTmH > nav > ul > li:nth-child(2) > a')
+    .wait('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-u91evt-0.hEpkwo > div > nav > ul > li:nth-child(2) > a')
     .wait(2000)
-    .click('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-s13b0dbv-0.fprTmH > nav > ul > li:nth-child(2) > a')
+    .click('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-u91evt-0.hEpkwo > div > nav > ul > li:nth-child(2) > a')
     .wait('#region-content > div > div > button.btn.btn-legacy.enter')
     .wait(2000)
     .click('#region-content > div > div > button.btn.btn-legacy.enter')
@@ -155,6 +161,9 @@ async function getGrades(id, section) {
     .wait('#gradebook-beta-app > div.header > div > ul > div.tab-button.dropdown.export-dropdown-button.open > ul > li:nth-child(2) > a > span')
     .wait(2000)
     .click('#gradebook-beta-app > div.header > div > ul > div.tab-button.dropdown.export-dropdown-button.open > ul > li:nth-child(2) > a > span')
+    //.wait('#show_attendance')
+    //.wait(1000)
+    //.check('#show_attendance')
     .wait('#generate')
     .wait(2000)
     .click('#generate')
@@ -165,7 +174,7 @@ async function getGrades(id, section) {
     .end()
     .then()
     .catch((error) => {
-      console.error('Error:', error)
+      console.error('Nightmare Error:', error)
     })
 
   return returnFilePath
@@ -175,7 +184,7 @@ async function getAbsences(id, section) {
   const returnFilePath = process.cwd() + '/' + section + '.absences.xls' 
   const Nightmare = require('nightmare')
   require('nightmare-download-manager')(Nightmare)
-  let nightmare = Nightmare({
+  var nightmare = Nightmare({
     show: true,
     paths: {
       downloads: process.cwd(),
@@ -183,6 +192,9 @@ async function getAbsences(id, section) {
     waitTimeout: WAIT_TIMEOUT,
     gotoTimeout: GOTO_TIMEOUT,
     executionTimeout: EXECUTION_TIMEOUT,
+    webPreferences: {
+      partition: 'nopersist'
+    },
   })
 
   await nightmare.on('console', (type, msg) => {
@@ -196,9 +208,9 @@ async function getAbsences(id, section) {
     }
   })
 
-  let usernamePassword = getUsernamePassword()
-  let username = usernamePassword[0]
-  let password = usernamePassword[1]
+  var usernamePassword = getUsernamePassword()
+  var username = usernamePassword[0]
+  var password = usernamePassword[1]
 
   await nightmare
     .downloadManager()
@@ -215,14 +227,14 @@ async function getAbsences(id, section) {
     .wait('.select-input__dropdown-option')
     .wait(2000)
     .click('.select-input__dropdown-option')
-    .wait('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
     .wait(2000)
-    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-s1rbkdy6-2.bKBYqH > button')
+    .click('#flux-app > div > div.login-main__content > main > div.login-main__sso > div.ToolTipstyles__WithToolTip-sc-1kvp6pu-2.dBUCOx > button')
     .wait(3000)
+    //.goto('https://app.tophat.com/e/' + id + '/gradebook')
     .goto('https://app.tophat.com/e/' + id)
-    .wait('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-s13b0dbv-0.fprTmH > nav > ul > li:nth-child(2) > a')
+    .wait('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-u91evt-0.hEpkwo > div > nav > ul > li:nth-child(2) > a')
     .wait(2000)
-    .click('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-s13b0dbv-0.fprTmH > nav > ul > li:nth-child(2) > a')
+    .click('#flux-app > div > div > div.course_navigation_header__container > div.CourseHeaderstyles__CourseHeaderWrapper-u91evt-0.hEpkwo > div > nav > ul > li:nth-child(2) > a')
     .wait('#region-content > div > div > button.btn.btn-legacy.enter')
     .wait(2000)
     .click('#region-content > div > div > button.btn.btn-legacy.enter')
@@ -239,16 +251,16 @@ async function getAbsences(id, section) {
     .end()
     .then()
     .catch((error) => {
-      console.error('Error:', error)
+      console.error('Nightmare Error:', error)
     })
 
   return returnFilePath
 }
 
 async function main() {
-  for (let key in sections) {
-    let gradeFilePath = await getGrades(key, sections[key])
-    let absenceFilePath = await getAbsences(key, sections[key])
+  for (var key in sections) {
+    var gradeFilePath = await getGrades(key, sections[key])
+    var absenceFilePath = await getAbsences(key, sections[key])
     await processFiles(gradeFilePath, absenceFilePath, sections[key])
   }
 }

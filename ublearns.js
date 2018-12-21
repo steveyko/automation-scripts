@@ -1,4 +1,4 @@
-const EXPECTED_ACTIVITIES = 9
+const EXPECTED_ACTIVITIES = 14
 const MAX_POINTS = 3
 const WAIT_TIMEOUT = 60000
 const GOTO_TIMEOUT = 60000
@@ -31,7 +31,7 @@ const csvHeader = [
   'Signals Unit - Recitation Session 2 [Total Pts: 3 Score]',
   'Embedded Systems Unit - Recitation Session 1 [Total Pts: 3 Score]',
   'Embedded Systems Unit - Recitation Session 2 [Total Pts: 3 Score]',
-  //'Web Design Assignment [Total Pts: 3 Score]',
+  'Web Design Assignment [Total Pts: 3 Score]',
   'Web Design Unit - Recitation Session 1 [Total Pts: 3 Score]',
   'Web Design Unit - Recitation Session 2 [Total Pts: 3 Score]',
   'Infrastructure Unit - Recitation Session 1 [Total Pts: 3 Score]',
@@ -41,8 +41,8 @@ const csvHeader = [
 ]
 
 function cleanup(row) {
-  let newRow = {}
-  for (let key in row) {
+  var newRow = {}
+  for (var key in row) {
     csvHeader.forEach((curVal) => {
       if (key.includes(curVal) && row[key] != '') {
         newRow[curVal] = row[key]
@@ -71,7 +71,7 @@ async function runNightmare(id, section) {
   })
 
   nightmare.on('download', (state, downloadItem) => {
-    let csv = process.cwd() + '/' + section + '.csv'
+    var csv = process.cwd() + '/' + section + '.csv'
     if(state == 'started') {
       nightmare.emit('download', csv, downloadItem)
     } else if (state == 'completed') {
@@ -80,19 +80,19 @@ async function runNightmare(id, section) {
       fs.createReadStream(csv)
         .pipe(csvParser())
         .on('data', (row) => {
-          for (let key in row) {
-            if (key.includes('Username')) let username = row[key]
-            if (key.includes('Last Name')) let lastname = row[key]
-            if (key.includes('First Name')) let firstname = row[key]
-            if (key.includes('ID')) let id = row[key] 
+          for (var key in row) {
+            if (key.includes('Username')) var username = row[key]
+            if (key.includes('Last Name')) var lastname = row[key]
+            if (key.includes('First Name')) var firstname = row[key]
+            if (key.includes('ID')) var id = row[key] 
           }
-          let newRow = cleanup(row)
-          let total = 0
-          for (let key in newRow) {
+          var newRow = cleanup(row)
+          var total = 0
+          for (var key in newRow) {
             total += parseInt(newRow[key])
           }
 
-          let max = EXPECTED_ACTIVITIES * MAX_POINTS
+          var max = EXPECTED_ACTIVITIES * MAX_POINTS
           console.log(section + ',' + username + '@buffalo.edu,' + id + ',' + firstname + ',' + lastname + ',' + total + ',' + max)
         })
         .on('end', () => {
@@ -102,10 +102,10 @@ async function runNightmare(id, section) {
   })
 
   const fs = require('fs')
-  let input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
+  var input = fs.readFileSync(process.cwd() + '/' + PWD_FILE, { encoding: 'utf8' })
   input = input.split('\n')
-  let username = input[0]
-  let password = input[1]
+  var username = input[0]
+  var password = input[1]
 
   await nightmare
     .downloadManager()
@@ -133,12 +133,12 @@ async function runNightmare(id, section) {
     .end()
     .then()
     .catch((error) => {
-      console.error('Error:' + error)
+      console.error('Nightmare Error:' + error)
     })
 }
 
 async function main() {
-  for (let key in sections) {
+  for (var key in sections) {
     await runNightmare(key, sections[key])
   }
 }

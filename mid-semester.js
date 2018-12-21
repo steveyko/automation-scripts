@@ -154,10 +154,13 @@ async function main() {
   for (let email in gradebook) {
     let row = gradebook[email]
     //console.log('section: ' + row[0] + ', id: ' + row[1] + ', name: ' + row[2] + ' ' + row[3] + ', absences: ' + row[6] + ', grade: ' + row[9] + ', letter: ' + row[11])
-    if (row[11] == 'F' || row[11] == 'D' || row[11] == 'D+' || row[11] == undefined) {
+    //if (row[11] == 'F' || row[11] == 'D' || row[11] == 'D+' || row[11] == undefined) {
+    //  console.log(row[1] + ',' + 'MU')
+    //} else {
+    //  console.log(row[1] + ',' + 'MS')
+    //}
+    if (row[11] == 'F' || row[11] == undefined) {
       console.log(row[1] + ',' + 'MU')
-    } else {
-      console.log(row[1] + ',' + 'MS')
     }
   }
 }
