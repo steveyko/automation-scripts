@@ -47,8 +47,12 @@ async function processFiles(xls0, xls1, section) {
     if (grade == undefined) {
       await console.error('No grade for ' + email)
     }
+    if (grade[email] === undefined) {
+      gradebook[email] = [section, email, firstName, lastName, grade, total]
+    } else {
+      await console.error('Duplicate entry for ' + email)
+    }
 
-    gradebook[email] = [section, email, firstName, lastName, grade, total]
   }
 
   /*

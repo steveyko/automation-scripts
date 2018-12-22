@@ -1,6 +1,7 @@
 const TOPHAT_RESULT = 'tophat.final.out'
 const UBLEARNS_RESULT = 'ublearns.final.out'
 const ABSENCE_THRESHOLD = 3
+const TOTAL_LECTURES = 25
 const cutoff = { // below
   'F' : 50,
   'D' : 58,
@@ -33,11 +34,41 @@ function getOutput(type) {
   for (let rowIndex in input) {
     if (input[rowIndex] == '') continue
     let row = input[rowIndex].split(',')
+    let row1 = row[1]
     if (type == 'tophat') {
-      output[row[1]] = row.splice(4, 3)
+      let entries = row.splice(4, 3).concat(row[0])
+      if (output[row1] === undefined) {
+        output[row1] = entries
+      } else {
+        console.error('Duplicate entry from TopHat for ' + row1)
+        let existingRow = output[row1]
+        let newRow = entries
+        // Combine duplicate entries. The last undefined indicates that it is a
+        // duplicate.
+        // This will return all possible maxes for duplicate sections, and
+        // undefined for the tophat section entry:
+        // [tophat absences, tophat grade, tophat max dictionary, tophat section]
+        // Later, a correct max should be chosen based on the real section
+        // reported from UBlearns.
+        //
+        // This assumes that only there are maximum two sections where a student
+        // can appear.
+        let newAbsences = parseFloat(existingRow[0]) + parseFloat(newRow[0]) - TOTAL_LECTURES 
+        let newGrade = parseFloat(existingRow[1]) + parseFloat(newRow[1])
+        let newMax = {}
+        newMax[existingRow[3]] = existingRow[2]
+        newMax[newRow[3]] = newRow[2]
+        let newSection = undefined
+        output[row1] = [newAbsences.toString(), newGrade.toString(), newMax, newSection]
+      }
     } else if (type == 'ublearns') {
-      output[row[1]] = (row.splice(0, 1) + ',' + row.splice(1, 5)).split(',')
+      if (output[row1] === undefined) {
+        output[row1] = (row.splice(0, 1) + ',' + row.splice(1, 5)).split(',')
+      } else {
+        console.error('Duplicate entry from UBlearns for ' + row1)
+      }
     } else {
+      console.error('Wrong gradebook type')
       return output
     }
   }
@@ -138,6 +169,26 @@ async function main() {
   let ublearns = await getOutput('ublearns')
 
   for (let email in ublearns) {
+    // Need to clean up the tophat output due to potential duplicates.
+    // getOutput for tophat returns the following.
+    // [tophat absences, tophat grade, tophat max, tophat section]
+    // If tophat section is undefined, it is a duplicate.
+    // In a duplicate, tophat max is a dictionary containing all possible maxes
+    // based on the (duplicate) sections.
+    // First, get tophat section to identify duplicates.
+    // Second, remove tophat section from the array, since it's not accurate
+    // anyway.
+    // Third, if it is a duplicate, choose the correct tophat max based on the
+    // real section reported by UBlearns.
+
+    tophatSection = tophat[email][3]
+    tophat[email] = tophat[email].splice(0, 3)
+    if (tophatSection == undefined) {
+      // this is a duplicate
+      // [tophat absences, tophat grade, tophat max dict]
+      let realSection = ublearns[email][0]
+      tophat[email][2] = tophat[email][2][realSection]
+    }
     gradebook[email] = ublearns[email].concat(tophat[email])
   }
 
