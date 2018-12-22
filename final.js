@@ -24,6 +24,7 @@ function getOutput(type) {
   } else if (type == 'ublearns') {
     file = UBLEARNS_RESULT
   } else {
+    console.error('Wrong gradebook type')
     return output
   }
 
@@ -36,7 +37,9 @@ function getOutput(type) {
     let row = input[rowIndex].split(',')
     let row1 = row[1]
     if (type == 'tophat') {
+      // From tophat: section, email, firstName, lastName, absences, grade, max
       let entries = row.splice(4, 3).concat(row[0])
+      // The following ultimately returns: absences, grade, max (can be a dict), section
       if (output[row1] === undefined) {
         output[row1] = entries
       } else {
@@ -62,13 +65,15 @@ function getOutput(type) {
         output[row1] = [newAbsences.toString(), newGrade.toString(), newMax, newSection]
       }
     } else if (type == 'ublearns') {
+      // From UBlearns: section, username@buffalo.edu, id, firstname, lastname, grade, max
+      // The following ultimately returns: section, id, firstname, lastname, grade, max
       if (output[row1] === undefined) {
         output[row1] = (row.splice(0, 1) + ',' + row.splice(1, 5)).split(',')
       } else {
         console.error('Duplicate entry from UBlearns for ' + row1)
+        // I assume that there's no duplicate from UBlearns.
       }
     } else {
-      console.error('Wrong gradebook type')
       return output
     }
   }

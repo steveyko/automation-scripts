@@ -1,3 +1,5 @@
+// Outputs the following:
+// section, username@buffalo.edu, id, firstname, lastname, grade, max
 const EXPECTED_ACTIVITIES = 14
 const MAX_POINTS = 3
 const WAIT_TIMEOUT = 60000

@@ -1,3 +1,5 @@
+// Outputs the following:
+// section, email, firstName, lastName, absences, grade, max
 const WAIT_TIMEOUT = 60000
 const GOTO_TIMEOUT = 60000
 const EXECUTION_TIMEOUT = 60000
@@ -21,7 +23,7 @@ async function processFiles(xls0, xls1, section) {
   var gradeSheet = workbookGrade.Sheets[workbookGrade.SheetNames[0]]
   var absenceSheet = workbookAbsence.Sheets[workbookAbsence.SheetNames[0]]
   /*
-   * gradebook: section, email, firstName, lastName, absences, grade, total
+   * gradebook: section, email, firstName, lastName, absences, grade, max
    */
   var gradebook = {}
 
@@ -32,10 +34,10 @@ async function processFiles(xls0, xls1, section) {
    * column D: first name
    * column E: last name
    * column G: grade
-   * column H: total
+   * column H: max
    */
   var row = 2 // The first two rows are the header
-  var total = gradeSheet['H3'].v
+  var max = gradeSheet['H3'].v
   while (true) {
     row++
     var email = (gradeSheet['C' + row] ? gradeSheet['C' + row].v : undefined)
@@ -48,7 +50,7 @@ async function processFiles(xls0, xls1, section) {
       await console.error('No grade for ' + email)
     }
     if (grade[email] === undefined) {
-      gradebook[email] = [section, email, firstName, lastName, grade, total]
+      gradebook[email] = [section, email, firstName, lastName, grade, max]
     } else {
       await console.error('Duplicate entry for ' + email)
     }
@@ -69,7 +71,7 @@ async function processFiles(xls0, xls1, section) {
 
     if (email == undefined) break
     /*
-     * section, email, firstName, lastName, absences, grade, total
+     * section, email, firstName, lastName, absences, grade, max
      */
     if (gradebook[email] == undefined) {
       console.error('No entry in gradebook for ' + email)
