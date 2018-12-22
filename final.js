@@ -176,8 +176,8 @@ async function main() {
     // In a duplicate, tophat max is a dictionary containing all possible maxes
     // based on the (duplicate) sections.
     // First, get tophat section to identify duplicates.
-    // Second, remove tophat section from the array, since it's not accurate
-    // anyway.
+    // Second, remove tophat section from the array, since it's not necessary
+    // at this point.
     // Third, if it is a duplicate, choose the correct tophat max based on the
     // real section reported by UBlearns.
 
